@@ -1,4 +1,4 @@
-package osin
+package oauth2
 
 // AllowedAuthorizeType is a collection of allowed auth request types
 type AllowedAuthorizeType []AuthorizeRequestType

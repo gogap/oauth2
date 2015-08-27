@@ -1,4 +1,4 @@
-package osin
+package oauth2
 
 import (
 	"encoding/json"
