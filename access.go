@@ -110,19 +110,19 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 	// Only allow GET or POST
 	if r.Method == "GET" {
 		if !s.Config.AllowGetAccessRequest {
-			w.SetError(E_INVALID_REQUEST, "")
 			w.InternalError = errors.New("Request must be POST")
+			w.SetError(E_INVALID_REQUEST, w.InternalError.Error())
 			return nil
 		}
 	} else if r.Method != "POST" {
-		w.SetError(E_INVALID_REQUEST, "")
 		w.InternalError = errors.New("Request must be POST")
+		w.SetError(E_INVALID_REQUEST, w.InternalError.Error())
 		return nil
 	}
 
 	err := r.ParseForm()
 	if err != nil {
-		w.SetError(E_INVALID_REQUEST, "")
+		w.SetError(E_INVALID_REQUEST, err.Error())
 		w.InternalError = err
 		return nil
 	}
@@ -166,7 +166,7 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 
 	// "code" is required
 	if ret.Code == "" {
-		w.SetError(E_INVALID_GRANT, "")
+		w.SetError(E_INVALID_GRANT, "code is required")
 		return nil
 	}
 
@@ -179,7 +179,7 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 	var err error
 	ret.AuthorizeData, err = w.Storage.LoadAuthorize(ret.Code)
 	if err != nil {
-		w.SetError(E_INVALID_GRANT, "")
+		w.SetError(E_INVALID_GRANT, err.Error())
 		w.InternalError = err
 		return nil
 	}
@@ -211,7 +211,7 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
 	}
 	if err = ValidateUriList(ret.Client.GetRedirectUri(), ret.RedirectUri, s.Config.RedirectUriSeparator); err != nil {
-		w.SetError(E_INVALID_REQUEST, "")
+		w.SetError(E_INVALID_REQUEST, err.Error())
 		w.InternalError = err
 		return nil
 	}
@@ -271,7 +271,7 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 
 	// "refresh_token" is required
 	if ret.Code == "" {
-		w.SetError(E_INVALID_GRANT, "")
+		w.SetError(E_INVALID_GRANT, "refresh_token is required")
 		return nil
 	}
 
@@ -284,7 +284,7 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 	var err error
 	ret.AccessData, err = w.Storage.LoadRefresh(ret.Code)
 	if err != nil {
-		w.SetError(E_INVALID_GRANT, "")
+		w.SetError(E_INVALID_GRANT, err.Error())
 		w.InternalError = err
 		return nil
 	}
@@ -452,7 +452,7 @@ func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessReq
 			// generate access token
 			ret.AccessToken, ret.RefreshToken, err = s.AccessTokenGen.GenerateAccessToken(ret, ar.GenerateRefresh)
 			if err != nil {
-				w.SetError(E_SERVER_ERROR, "")
+				w.SetError(E_SERVER_ERROR, err.Error())
 				w.InternalError = err
 				return
 			}
@@ -462,7 +462,7 @@ func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessReq
 
 		// save access token
 		if err = w.Storage.SaveAccess(ret); err != nil {
-			w.SetError(E_SERVER_ERROR, "")
+			w.SetError(E_SERVER_ERROR, err.Error())
 			w.InternalError = err
 			return
 		}
