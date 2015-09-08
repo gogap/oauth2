@@ -90,3 +90,30 @@ func getClientAuth(w *Response, r *http.Request, allowQueryParams bool) *BasicAu
 	}
 	return auth
 }
+
+func internalGetClientAuth(w *Response, r *http.Request, allowQueryParams bool) *BasicAuth {
+
+	if allowQueryParams {
+		// Allow for auth without password
+		auth := &BasicAuth{
+			Username: r.Form.Get("client_id"),
+			Password: r.Form.Get("client_secret"),
+		}
+		if auth.Username != "" {
+			return auth
+		}
+	}
+
+	auth, err := CheckBasicAuth(r)
+	if err != nil {
+		w.SetError(E_INVALID_REQUEST, "")
+		w.InternalError = err
+		return nil
+	}
+	if auth == nil {
+		w.SetError(E_INVALID_REQUEST, "")
+		w.InternalError = errors.New("Client authentication not sent")
+		return nil
+	}
+	return auth
+}

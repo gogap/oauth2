@@ -254,7 +254,7 @@ func extraScopes(access_scopes, refresh_scopes string) bool {
 
 func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
-	auth := getClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	auth := internalGetClientAuth(w, r, s.Config.AllowClientSecretInParams)
 	if auth == nil {
 		return nil
 	}
@@ -276,7 +276,7 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 	}
 
 	// must have a valid client
-	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
+	if ret.Client = internalGetClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
 
@@ -327,11 +327,10 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 
 func (s *Server) handlePasswordRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
-	auth := getClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	auth := internalGetClientAuth(w, r, s.Config.AllowClientSecretInParams)
 	if auth == nil {
 		return nil
 	}
-
 	// generate access token
 	ret := &AccessRequest{
 		Type:            PASSWORD,
@@ -344,16 +343,15 @@ func (s *Server) handlePasswordRequest(w *Response, r *http.Request) *AccessRequ
 	}
 
 	// "username" and "password" is required
-	if ret.Username == "" || ret.Password == "" {
-		w.SetError(E_INVALID_GRANT, "")
+	if ret.Username == "" {
+		w.SetError(E_INVALID_GRANT, "username can't null")
 		return nil
 	}
 
 	// must have a valid client
-	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
+	if ret.Client = internalGetClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
-
 	// set redirect uri
 	ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
 
@@ -511,6 +509,25 @@ func getClient(auth *BasicAuth, storage Storage, w *Response) Client {
 		return nil
 	}
 	if client.GetSecret() != auth.Password {
+		w.SetError(E_UNAUTHORIZED_CLIENT, "")
+		return nil
+	}
+	if client.GetRedirectUri() == "" {
+		w.SetError(E_UNAUTHORIZED_CLIENT, "")
+		return nil
+	}
+	return client
+}
+
+//not check secret
+func internalGetClient(auth *BasicAuth, storage Storage, w *Response) Client {
+	client, err := storage.GetClient(auth.Username)
+	if err != nil {
+		w.SetError(E_SERVER_ERROR, "")
+		w.InternalError = err
+		return nil
+	}
+	if client == nil {
 		w.SetError(E_UNAUTHORIZED_CLIENT, "")
 		return nil
 	}
