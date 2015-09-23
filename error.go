@@ -12,6 +12,7 @@ const (
 	E_TEMPORARILY_UNAVAILABLE          = "temporarily_unavailable"
 	E_UNSUPPORTED_GRANT_TYPE           = "unsupported_grant_type"
 	E_INVALID_GRANT                    = "invalid_grant"
+	E_TOKEN_EXPIRE                     = "token_expire"
 	E_INVALID_CLIENT                   = "invalid_client"
 )
 
@@ -41,6 +42,7 @@ func NewDefaultErrors() *DefaultErrors {
 	r.errormap[E_UNSUPPORTED_GRANT_TYPE] = "The authorization grant type is not supported by the authorization server."
 	r.errormap[E_INVALID_GRANT] = "The provided authorization grant (e.g., authorization code, resource owner credentials) or refresh token is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."
 	r.errormap[E_INVALID_CLIENT] = "Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method)."
+	r.errormap[E_TOKEN_EXPIRE] = "token has expired"
 	return r
 }
 

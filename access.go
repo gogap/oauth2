@@ -254,7 +254,7 @@ func extraScopes(access_scopes, refresh_scopes string) bool {
 
 func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
-	auth := internalGetClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	auth := getClientAuth(w, r, s.Config.AllowClientSecretInParams)
 	if auth == nil {
 		return nil
 	}
@@ -276,7 +276,7 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 	}
 
 	// must have a valid client
-	if ret.Client = internalGetClient(auth, w.Storage, w); ret.Client == nil {
+	if ret.Client = getClient(auth, w.Storage, w); ret.Client == nil {
 		return nil
 	}
 
