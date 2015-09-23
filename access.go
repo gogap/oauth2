@@ -306,7 +306,6 @@ func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *Access
 		w.SetError(E_INVALID_CLIENT, "")
 		w.InternalError = errors.New("Client id must be the same from previous token")
 		return nil
-
 	}
 
 	// set rest of data
