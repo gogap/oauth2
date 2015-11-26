@@ -40,7 +40,8 @@ type AccessRequest struct {
 	Authorized bool
 
 	// Token expiration in seconds. Change if different from default
-	Expiration int32
+	Expiration        int32
+	RefreshExpiration int32
 
 	// Set if a refresh token should be generated
 	GenerateRefresh bool
@@ -70,7 +71,8 @@ type AccessData struct {
 	RefreshToken string
 
 	// Token expiration in seconds
-	ExpiresIn int32
+	ExpiresIn           int32
+	RefreshExpirationIn int32
 
 	// Requested scope
 	Scope string
@@ -436,14 +438,15 @@ func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessReq
 		if ar.ForceAccessData == nil {
 			// generate access token
 			ret = &AccessData{
-				Client:        ar.Client,
-				AuthorizeData: ar.AuthorizeData,
-				AccessData:    ar.AccessData,
-				RedirectUri:   redirectUri,
-				CreatedAt:     s.Now(),
-				ExpiresIn:     ar.Expiration,
-				UserData:      ar.UserData,
-				Scope:         ar.Scope,
+				Client:              ar.Client,
+				AuthorizeData:       ar.AuthorizeData,
+				AccessData:          ar.AccessData,
+				RedirectUri:         redirectUri,
+				CreatedAt:           s.Now(),
+				ExpiresIn:           ar.Expiration,
+				RefreshExpirationIn: ar.RefreshExpiration,
+				UserData:            ar.UserData,
+				Scope:               ar.Scope,
 			}
 
 			// generate access token
