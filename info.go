@@ -72,9 +72,9 @@ func (s *Server) FinishInfoRequest(w *Response, r *http.Request, ir *InfoRequest
 	w.Output["access_token"] = ir.AccessData.AccessToken
 	w.Output["token_type"] = s.Config.TokenType
 	w.Output["expires_in"] = ir.AccessData.CreatedAt.Add(time.Duration(ir.AccessData.ExpiresIn)*time.Second).Sub(s.Now()) / time.Second
-	if ir.AccessData.RefreshToken != "" {
+	/*if ir.AccessData.RefreshToken != "" {
 		w.Output["refresh_token"] = ir.AccessData.RefreshToken
-	}
+	}*/
 	if ir.AccessData.Scope != "" {
 		w.Output["scope"] = ir.AccessData.Scope
 	}
