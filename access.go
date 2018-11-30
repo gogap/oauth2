@@ -36,7 +36,7 @@ type AccessRequest struct {
 	AssertionType   string
 	Assertion       string
 	Captcha         string
-	OtpCode         string
+	Otp             string
 
 	// Set if request is authorized
 	Authorized bool
@@ -341,7 +341,7 @@ func (s *Server) handlePasswordRequest(w *Response, r *http.Request) *AccessRequ
 		Password:        r.Form.Get("password"),
 		Scope:           r.Form.Get("scope"),
 		Captcha:         r.Form.Get("captcha"),
-		OtpCode:         r.Form.Get("otp_code"),
+		Otp:             r.Form.Get("otp"),
 		GenerateRefresh: true,
 		Expiration:      s.Config.AccessExpiration,
 		HttpRequest:     r,
