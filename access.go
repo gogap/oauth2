@@ -35,6 +35,8 @@ type AccessRequest struct {
 	Password        string
 	AssertionType   string
 	Assertion       string
+	Captcha         string
+	OtpCode         string
 
 	// Set if request is authorized
 	Authorized bool
@@ -338,6 +340,8 @@ func (s *Server) handlePasswordRequest(w *Response, r *http.Request) *AccessRequ
 		Username:        r.Form.Get("username"),
 		Password:        r.Form.Get("password"),
 		Scope:           r.Form.Get("scope"),
+		Captcha:         r.Form.Get("captcha"),
+		OtpCode:         r.Form.Get("otp_code"),
 		GenerateRefresh: true,
 		Expiration:      s.Config.AccessExpiration,
 		HttpRequest:     r,
@@ -476,8 +480,9 @@ func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessReq
 		if ret.AccessData != nil {
 			if ret.AccessData.RefreshToken != "" {
 				w.Storage.RemoveRefresh(ret.AccessData.RefreshToken)
+			} else {
+				w.Storage.RemoveAccess(ret.AccessData.AccessToken)
 			}
-			w.Storage.RemoveAccess(ret.AccessData.AccessToken)
 		}
 
 		// output data
