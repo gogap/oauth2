@@ -17,6 +17,7 @@ const (
 	CLIENT_CREDENTIALS AccessRequestType = "client_credentials"
 	ASSERTION          AccessRequestType = "assertion"
 	IMPLICIT           AccessRequestType = "__implicit"
+	CAPTCHA            AccessRequestType = "captcha"
 )
 
 // AccessRequest is a request for access tokens
@@ -144,6 +145,8 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 			return s.handleClientCredentialsRequest(w, r)
 		case ASSERTION:
 			return s.handleAssertionRequest(w, r)
+		case CAPTCHA:
+			return s.handleCaptchaRequest(w, r)
 		}
 	}
 
@@ -342,6 +345,39 @@ func (s *Server) handlePasswordRequest(w *Response, r *http.Request) *AccessRequ
 		Scope:           r.Form.Get("scope"),
 		Captcha:         r.Form.Get("captcha"),
 		Otp:             r.Form.Get("otp"),
+		GenerateRefresh: true,
+		Expiration:      s.Config.AccessExpiration,
+		HttpRequest:     r,
+	}
+
+	// "username" and "password" is required
+	if ret.Username == "" {
+		w.SetError(E_INVALID_GRANT, "username can't null")
+		return nil
+	}
+
+	// must have a valid client
+	if ret.Client = internalGetClient(auth, w.Storage, w); ret.Client == nil {
+		return nil
+	}
+	// set redirect uri
+	ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
+
+	return ret
+}
+
+func (s *Server) handleCaptchaRequest(w *Response, r *http.Request) *AccessRequest {
+	// get client authentication
+	auth := internalGetClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	if auth == nil {
+		return nil
+	}
+	// generate access token
+	ret := &AccessRequest{
+		Type:            CAPTCHA,
+		Username:        r.Form.Get("username"),
+		Scope:           r.Form.Get("scope"),
+		Captcha:         r.Form.Get("captcha"),
 		GenerateRefresh: true,
 		Expiration:      s.Config.AccessExpiration,
 		HttpRequest:     r,
