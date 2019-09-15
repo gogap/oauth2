@@ -18,6 +18,7 @@ const (
 	ASSERTION          AccessRequestType = "assertion"
 	IMPLICIT           AccessRequestType = "__implicit"
 	CAPTCHA            AccessRequestType = "captcha"
+	WX                 AccessRequestType = "wx"
 )
 
 // AccessRequest is a request for access tokens
@@ -34,6 +35,7 @@ type AccessRequest struct {
 	Scope           string
 	Username        string
 	Password        string
+	Wxcode          string
 	AssertionType   string
 	Assertion       string
 	Captcha         string
@@ -147,6 +149,8 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 			return s.handleAssertionRequest(w, r)
 		case CAPTCHA:
 			return s.handleCaptchaRequest(w, r)
+		case WX:
+			return s.handleWxRequest(w, r)
 		}
 	}
 
@@ -386,6 +390,38 @@ func (s *Server) handleCaptchaRequest(w *Response, r *http.Request) *AccessReque
 	// "username" and "password" is required
 	if ret.Username == "" {
 		w.SetError(E_INVALID_GRANT, "username can't null")
+		return nil
+	}
+
+	// must have a valid client
+	if ret.Client = internalGetClient(auth, w.Storage, w); ret.Client == nil {
+		return nil
+	}
+	// set redirect uri
+	ret.RedirectUri = FirstUri(ret.Client.GetRedirectUri(), s.Config.RedirectUriSeparator)
+
+	return ret
+}
+
+func (s *Server) handleWxRequest(w *Response, r *http.Request) *AccessRequest {
+	// get client authentication
+	auth := internalGetClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	if auth == nil {
+		return nil
+	}
+	// generate access token
+	ret := &AccessRequest{
+		Type:            WX,
+		Scope:           r.Form.Get("scope"),
+		Wxcode:          r.Form.Get("wxcode"),
+		GenerateRefresh: true,
+		Expiration:      s.Config.AccessExpiration,
+		HttpRequest:     r,
+	}
+
+	// "Wxcode" is required
+	if ret.Wxcode == "" {
+		w.SetError(E_INVALID_GRANT, "wxcode can't null")
 		return nil
 	}
 
